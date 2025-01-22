@@ -43,7 +43,7 @@ Hoconenv allows you to specify the following options:
 - Continue loading despite errors.
 - Override existing environment variables.
 - Add a prefix for all environment variables (specific to a file).
-- Define file patterns to include  (`.conf`, `.hcon`).
+- Define file patterns to include  (`.conf`, `.hocon`).
 
 Below is the list of available fields for configuring options:
 
