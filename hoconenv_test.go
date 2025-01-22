@@ -1,194 +1,217 @@
 package hoconenv
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
-func TestMain(m *testing.M) {
-	code := m.Run()
-	os.Unsetenv("APP_NAME")
-	os.Unsetenv("APP_DATABASE_HOST")
-	os.Unsetenv("APP_DATABASE_PASSWORD")
-	os.Exit(code)
-}
-
-func TestLoadValidHocon(t *testing.T) {
-	hoconContent := `
-app {
-	name = MyApp
-	version = "1.0"
-	database {
-		host = localhost
-		port = 5432
-		user = admin
-		password = "secret"
-	}
-}`
-	fileName := "test_config.conf"
-	err := os.WriteFile(fileName, []byte(hoconContent), 0644)
+// Helper functions
+func setupTestEnv(t *testing.T) func() {
+	tempDir, err := os.MkdirTemp("", "hoconenv-test")
 	if err != nil {
-		t.Fatalf("Failed to create test file: %v", err)
+		t.Fatal(err)
 	}
-
-	defer os.Remove(fileName)
-
-	// Load the HOCON file
-	err = Load(fileName)
+	originalWd, err := os.Getwd()
 	if err != nil {
-		t.Fatalf("Failed to load HOCON: %v", err)
+		t.Fatal(err)
 	}
+	os.Chdir(tempDir)
 
-	// Check environment variables
-	tests := map[string]string{
-		"APP_NAME":              "MyApp",
-		"APP_VERSION":           "1.0",
-		"APP_DATABASE_HOST":     "localhost",
-		"APP_DATABASE_PORT":     "5432",
-		"APP_DATABASE_USER":     "admin",
-		"APP_DATABASE_PASSWORD": "secret",
-	}
-
-	for key, expected := range tests {
-		value := os.Getenv(key)
-		if value != expected {
-			t.Errorf("Expected %s to be %s, got %s", key, expected, value)
-		}
+	return func() {
+		os.Chdir(originalWd)
+		os.RemoveAll(tempDir)
 	}
 }
 
-func TestLoadEmptyFile(t *testing.T) {
-	fileName := "empty_config.conf"
-	err := os.WriteFile(fileName, []byte(""), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create test file: %v", err)
+func createTempConfig(t *testing.T, name, content string) {
+	dir := filepath.Dir(name)
+	if dir != "." {
+		os.MkdirAll(dir, 0755)
 	}
-
-	defer os.Remove(fileName)
-
-	initialEnv := os.Environ()
-
-	// Load the empty file
-	err = Load(fileName)
+	err := os.WriteFile(name, []byte(content), 0644)
 	if err != nil {
-		t.Fatalf("Failed to load empty HOCON file: %v", err)
-	}
-
-	finalEnv := os.Environ()
-	// Ensure no unexpected environment variables are set
-	if len(finalEnv) != len(initialEnv) {
-		t.Errorf("Expected no environment variables to be set for an empty file, got %v", finalEnv)
+		t.Fatal(err)
 	}
 }
 
-func TestLoadInvalidSyntax(t *testing.T) {
-	// Create a HOCON file with invalid syntax
-	hoconContent := `
-app {
-	name = MyApp
-	database {
-    	host: localhost
-    	port = 5432
-    }
-}`
-	fileName := "invalid_config.conf"
-	err := os.WriteFile(fileName, []byte(hoconContent), 0644)
+func assertNoError(t *testing.T, err error) {
+	t.Helper()
 	if err != nil {
-		t.Fatalf("Failed to create test file: %v", err)
-	}
-	defer os.Remove(fileName)
-
-	// Attempt to load the invalid file
-	err = Load(fileName)
-	if err == nil {
-		t.Error("Expected an error for invalid HOCON syntax, got nil")
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
-func TestLoadCommentsAndEmptyLines(t *testing.T) {
-	hoconContent := `
-# This is a comment
-app {
-    name = MyApp
-
-    // Another comment
-    database {
-        host = localhost # Inline comment
-        port = 5432
-    }
-}`
-	fileName := "commented_config.conf"
-	err := os.WriteFile(fileName, []byte(hoconContent), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create test file: %v", err)
-	}
-
-	defer os.Remove(fileName)
-
-	// Load the file
-	err = Load(fileName)
-	if err != nil {
-		t.Fatalf("Failed to load HOCON with comments: %v", err)
-	}
-
-	// Check environment variables
-	tests := map[string]string{
-		"APP_NAME":          "MyApp",
-		"APP_DATABASE_HOST": "localhost",
-		"APP_DATABASE_PORT": "5432",
-	}
-
-	for key, expected := range tests {
-		value := os.Getenv(key)
-		if value != expected {
-			t.Errorf("Expected %s to be %s, got %s", key, expected, value)
-		}
+func assertEnvVar(t *testing.T, key, expected string) {
+	t.Helper()
+	if got := os.Getenv(key); got != expected {
+		t.Errorf("env var %s = %s; want %s", key, got, expected)
 	}
 }
 
-func TestSetPrefix(t *testing.T) {
-	hoconContent := `
-app {
-	name = MyApp
-	version = "1.0"
-	database {
-		host = localhost
-		port = 5432
-		user = admin
-		password = "secret"
-	}
-}`
-	fileName := "test_set_prefix.conf"
-	err := os.WriteFile(fileName, []byte(hoconContent), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create test file: %v", err)
-	}
+func TestBasicLoading(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
 
-	defer os.Remove(fileName)
+	content := `
+database {
+	url = "postgresql://localhost:5432/db"
+	user = "admin"
+}
+`
+	createTempConfig(t, "basic.conf", content)
 
-	// Set a prefix "TEST"
-	SetPrefix("TEST")
+	cfg := NewConfig()
+	err := cfg.Load(DefaultOptions(), "basic.conf")
 
-	// Load the HOCON file
-	err = Load(fileName)
-	if err != nil {
-		t.Fatalf("Failed to load HOCON: %v", err)
-	}
+	assertNoError(t, err)
+	assertEnvVar(t, "DATABASE_URL", "postgresql://localhost:5432/db")
+	assertEnvVar(t, "DATABASE_USER", "admin")
+}
 
-	// Check environment variables with prefix "TEST"
-	tests := map[string]string{
-		"TEST_APP_NAME":              "MyApp",
-		"TEST_APP_VERSION":           "1.0",
-		"TEST_APP_DATABASE_HOST":     "localhost",
-		"TEST_APP_DATABASE_PORT":     "5432",
-		"TEST_APP_DATABASE_USER":     "admin",
-		"TEST_APP_DATABASE_PASSWORD": "secret",
-	}
+func TestIncludeFile(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
 
-	for key, expected := range tests {
-		value := os.Getenv(key)
-		if value != expected {
-			t.Errorf("Expected %s to be %s, got %s", key, expected, value)
-		}
-	}
+	mainContent := `
+include "sub.conf"
+app.name = "main"
+`
+	subContent := `
+app.version = "1.0"
+`
+	createTempConfig(t, "main.conf", mainContent)
+	createTempConfig(t, "sub.conf", subContent)
+
+	cfg := NewConfig()
+	err := cfg.Load(DefaultOptions(), "main.conf")
+
+	assertNoError(t, err)
+	assertEnvVar(t, "APP_NAME", "main")
+	assertEnvVar(t, "APP_VERSION", "1.0")
+}
+
+func TestIncludeURL(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`remote.config = "from-url"`))
+	}))
+
+	defer server.Close()
+
+	content := `
+include url("` + server.URL + `")
+local.config = "local"	
+`
+
+	createTempConfig(t, "url.conf", content)
+
+	cfg := NewConfig()
+	err := cfg.Load(DefaultOptions(), "url.conf")
+
+	assertNoError(t, err)
+	assertEnvVar(t, "REMOTE_CONFIG", "from-url")
+	assertEnvVar(t, "LOCAL_CONFIG", "local")
+}
+
+func TestIncludeDirectory(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	os.Mkdir("configs", 0755)
+	createTempConfig(t, "configs/1.conf", "a = 1")
+	createTempConfig(t, "configs/2.conf", "b = 2")
+
+	content := `
+include directory("configs")
+`
+
+	createTempConfig(t, "dir.conf", content)
+
+	cfg := NewConfig()
+	err := cfg.Load(DefaultOptions(), "dir.conf")
+
+	assertNoError(t, err)
+	assertEnvVar(t, "A", "1")
+	assertEnvVar(t, "B", "2")
+}
+
+func TestGlobInclude(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	createTempConfig(t, "conf1.conf", "a = 1")
+	createTempConfig(t, "conf2.conf", "b = 2")
+
+	content := `
+include "conf*.conf"	
+`
+	createTempConfig(t, "glob.conf", content)
+
+	cfg := NewConfig()
+	err := cfg.Load(DefaultOptions(), "glob.conf")
+
+	assertNoError(t, err)
+	assertEnvVar(t, "A", "1")
+	assertEnvVar(t, "B", "2")
+}
+
+func TestOptionalInclude(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	content := `
+include optional("nonexistent.conf")
+test = "value"	
+`
+
+	createTempConfig(t, "optional.conf", content)
+
+	cfg := NewConfig()
+	err := cfg.Load(DefaultOptions(), "optional.conf")
+
+	assertNoError(t, err)
+	assertEnvVar(t, "TEST", "value")
+}
+
+func TestPrefixOption(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	content := `
+test = "value"	
+`
+	createTempConfig(t, "prefix.conf", content)
+
+	opts := DefaultOptions()
+	opts.DefaultPrefix = "PRE"
+
+	cfg := NewConfig()
+	err := cfg.Load(opts, "prefix.conf")
+
+	assertNoError(t, err)
+	assertEnvVar(t, "PRE_TEST", "value")
+}
+
+func TestPrefixGlobal(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	// Global prefix
+	SetPrefix("PROD")
+
+	content := `
+host = "https://idontknow.com"	
+`
+
+	createTempConfig(t, "global_prefix.conf", content)
+
+	err := Load("global_prefix.conf")
+
+	assertNoError(t, err)
+	assertEnvVar(t, "PROD_HOST", "https://idontknow.com")
 }

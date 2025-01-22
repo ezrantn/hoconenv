@@ -21,63 +21,59 @@ go get github.com/ezrantn/hoconenv
 
 ## Usage
 
-### Basic Usage
-
-You can load a configuration file using the `Load` function. If no file path is provided, it will attempt to load the default `application.conf` file.
-
-#### Default Behavior (Load from `application.conf`)
+### Quick Start
 
 ```go
+// ...
+
+//  Load default configuration file (application.conf by default)
 err := hoconenv.Load()
-if err != nil {
-    log.Fatalf("Failed to load config: %v", err)
-}
 
-// Fetch an environment variable
-appName := os.Getenv("APP_NAME")
-fmt.Println("App Name:", appName)
+// Or load specific file
+err := hoconenv.Load("config.conf")
+
+// Access via environment variables
+os.Getenv("DATABASE_URL")
 ```
 
-#### Custom File Path
+### Options
 
-If you want to specify a custom configuration file path, pass the file path as an argument:
+Hoconenv allows you to specify the following options:
+
+- Continue loading despite errors.
+- Override existing environment variables.
+- Add a prefix for all environment variables (specific to a file).
+- Define file patterns to include  (`.conf`, `.hcon`).
+
+Below is the list of available fields for configuring options:
 
 ```go
-hoconenv.Load("path/to/your/config.conf")
+IgnoreErrors    bool 
+OverwriteEnv    bool
+DefaultPrefix   string
+IncludePatterns []string
 ```
 
-#### Set Prefix
-
-If you wish to have a prefix in your environment. You can do that with:
+By default, Hoconenv uses the following options:
 
 ```go
-hoconenv.SetPrefix("PRODUCTION")
-
-// Now if you call any variables inside your config, it will have "PRODUCTION" prefix
-
-err := hoconenv.Load()
-if err != nil {
-    log.Fatalf("Failed to load config: %v", err)
-}
-
-appName := os.Getenv("PRODUCTION_APP_NAME")
-fmt.Println(appName)
+IgnoreErrors:    false,
+OverwriteEnv:    true,
+DefaultPrefix:   "",
+IncludePatterns: []string{".conf", ".hocon"},
 ```
 
-#### For the Lazy
-
-If you're as lazy as I am, you can import Hoconenv as a blank identifier. This way, you don't need to explicitly call the `Load` method. Here's how:
+If you want to customize these options, you can do so as follows:
 
 ```go
-import (
-    _ "github.com/ezrantn/hoconenv/autoload"
-)
-```
+// Get the default options
+opts := hoconenv.DefaultOptions()
 
-It will work the same as the rest of the code. You can access your environment variables like this:
+// For example, add a prefix
+opts.DefaultPrefix = "APP"
 
-```go
-os.Getenv("APP_NAME")
+// Load the configuration file with the specified options
+err := hoconenv.LoadWithOptions(opts, "config.conf")
 ```
 
 ### Configuration File Format

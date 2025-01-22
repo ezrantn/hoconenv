@@ -9,3 +9,8 @@ tasks:
     cmds:
       - go fmt .
     silent: true
+  cov:
+    cmds:
+      - go test ./... -coverprofile=coverage.out
+      - go tool cover -html=coverage.out
+    silent: true
