@@ -122,7 +122,7 @@ app {
 	if err != nil {
 		t.Fatalf("Failed to create test file: %v", err)
 	}
-	
+
 	defer os.Remove(fileName)
 
 	// Load the file
@@ -136,6 +136,53 @@ app {
 		"APP_NAME":          "MyApp",
 		"APP_DATABASE_HOST": "localhost",
 		"APP_DATABASE_PORT": "5432",
+	}
+
+	for key, expected := range tests {
+		value := os.Getenv(key)
+		if value != expected {
+			t.Errorf("Expected %s to be %s, got %s", key, expected, value)
+		}
+	}
+}
+
+func TestSetPrefix(t *testing.T) {
+	hoconContent := `
+app {
+	name = MyApp
+	version = "1.0"
+	database {
+		host = localhost
+		port = 5432
+		user = admin
+		password = "secret"
+	}
+}`
+	fileName := "test_set_prefix.conf"
+	err := os.WriteFile(fileName, []byte(hoconContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create test file: %v", err)
+	}
+
+	defer os.Remove(fileName)
+
+	// Set a prefix "TEST"
+	SetPrefix("TEST")
+
+	// Load the HOCON file
+	err = Load(fileName)
+	if err != nil {
+		t.Fatalf("Failed to load HOCON: %v", err)
+	}
+
+	// Check environment variables with prefix "TEST"
+	tests := map[string]string{
+		"TEST_APP_NAME":              "MyApp",
+		"TEST_APP_VERSION":           "1.0",
+		"TEST_APP_DATABASE_HOST":     "localhost",
+		"TEST_APP_DATABASE_PORT":     "5432",
+		"TEST_APP_DATABASE_USER":     "admin",
+		"TEST_APP_DATABASE_PASSWORD": "secret",
 	}
 
 	for key, expected := range tests {

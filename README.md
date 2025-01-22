@@ -1,6 +1,6 @@
 # Hoconenv
 
-Hoconenv is a Go library for loading HOCON (Human-Optimized Config Object Notation) configuration files into environment variables. It supports comments, nested structures, and includes, providing an easy-to-use interface for configuring applications in Go.
+Hoconenv is a Go library for loading [HOCON (Human-Optimized Config Object Notation)](https://docs.spongepowered.org/stable/en/server/getting-started/configuration/hocon.html) configuration files into environment variables. It supports comments, nested structures, and includes, providing an easy-to-use interface for configuring applications in Go.
 
 ## Features
 
@@ -29,9 +29,9 @@ You can load a configuration file using the `Load` function. If no file path is 
 
 ```go
 err := hoconenv.Load()
-    if err != nil {
-        log.Fatalf("Failed to load config: %v", err)
-    }
+if err != nil {
+    log.Fatalf("Failed to load config: %v", err)
+}
 
 // Fetch an environment variable
 appName := os.Getenv("APP_NAME")
@@ -44,6 +44,24 @@ If you want to specify a custom configuration file path, pass the file path as a
 
 ```go
 hoconenv.Load("path/to/your/config.conf")
+```
+
+#### Set Prefix
+
+If you wish to have a prefix in your environment. You can do that with:
+
+```go
+hoconenv.SetPrefix("PRODUCTION")
+
+// Now if you call any variables inside your config, it will have "TEST" prefix
+
+err := hoconenv.Load()
+if err != nil {
+    log.Fatalf("Failed to load config: %v", err)
+}
+
+appName := os.Getenv("PRODUCTION_APP_NAME")
+fmt.Println(appName)
 ```
 
 #### For the Lazy

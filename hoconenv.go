@@ -7,6 +7,10 @@ import (
 	"strings"
 )
 
+var config struct {
+	prefix string
+}
+
 // Load loads the HOCON configuration file from the current directory or a specified path.
 func Load(fileName ...string) error {
 	// If no fileName is passed, search for a default file in the current directory
@@ -27,9 +31,9 @@ func Load(fileName ...string) error {
 	if err != nil {
 		return err
 	}
+
 	defer file.Close()
 
-	config := make(map[string]string)
 	scanner := bufio.NewScanner(file)
 	var currentKey string
 	keyStack := []string{}
@@ -86,9 +90,8 @@ func Load(fileName ...string) error {
 			key = currentKey + "." + key
 		}
 
-		// Convert to environment variable format
-		envKey := strings.ToUpper(strings.ReplaceAll(key, ".", "_"))
-		config[envKey] = value
+		// Convert to environment variable format with global prefix
+		envKey := config.prefix + strings.ToUpper(strings.ReplaceAll(key, ".", "_"))
 
 		// Set environment variable
 		os.Setenv(envKey, value)
@@ -103,4 +106,8 @@ func Load(fileName ...string) error {
 	}
 
 	return scanner.Err()
+}
+
+func SetPrefix(prefix string) {
+	config.prefix = strings.ToUpper(strings.TrimSpace(prefix)) + "_"
 }
