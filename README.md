@@ -53,7 +53,7 @@ If you wish to have a prefix in your environment. You can do that with:
 ```go
 hoconenv.SetPrefix("PRODUCTION")
 
-// Now if you call any variables inside your config, it will have "TEST" prefix
+// Now if you call any variables inside your config, it will have "PRODUCTION" prefix
 
 err := hoconenv.Load()
 if err != nil {
