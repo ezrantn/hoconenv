@@ -52,7 +52,7 @@ If you're as lazy as I am, you can import Hoconenv as a blank identifier. This w
 
 ```go
 import (
-    _ "github.com/ezrantn/hoconenv"
+    _ "github.com/ezrantn/hoconenv/autoload"
 )
 ```
 
