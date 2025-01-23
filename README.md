@@ -1,5 +1,9 @@
 # Hoconenv
 
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/ezrantn/hoconenv/go.yml)
+![GitHub License](https://img.shields.io/github/license/ezrantn/hoconenv)
+![GitHub last commit](https://img.shields.io/github/last-commit/ezrantn/hoconenv)
+
 Hoconenv is a Go library for loading [HOCON (Human-Optimized Config Object Notation)](https://docs.spongepowered.org/stable/en/server/getting-started/configuration/hocon.html) configuration files into environment variables. It supports comments, nested structures, and includes, providing an easy-to-use interface for configuring applications in Go.
 
 ## Features
@@ -33,7 +37,7 @@ err := hoconenv.Load()
 err := hoconenv.Load("config.conf")
 
 // Access via environment variables
-os.Getenv("DATABASE_URL")
+os.Getenv("database.url")
 ```
 
 If you're even lazier than that, you can simply import Hoconenv using a blank identifier, like so:
@@ -44,47 +48,20 @@ import _ "github.com/ezrantn/hoconenv/autoload"
 
 This way, you don't need to call `Load` explicitly. Just use `os.Getenv` to retrieve your variables.
 
-> [!NOTE]
-> If you're using the blank identifier approach, keep in mind that Hoconenv will use the default options. You cannot change these options in this case.
+### Prefix
 
-### Options
+Hoconenv supports the use of a prefix. The global prefix applies to all environment variables set by the package.
 
-Hoconenv allows you to specify the following options:
-
-- Continue loading despite errors.
-- Override existing environment variables.
-- Add a prefix for all environment variables (specific to a file).
-- Define file patterns to include  (`.conf`, `.hocon`).
-
-Below is the list of available fields for configuring options:
+To set a global prefix, use:
 
 ```go
-IgnoreErrors    bool 
-OverwriteEnv    bool
-DefaultPrefix   string
-IncludePatterns []string
-```
+// Set a global prefix
+hoconenv.SetPrefix("prod")
 
-By default, Hoconenv uses the following options:
-
-```go
-IgnoreErrors:    false,
-OverwriteEnv:    true,
-DefaultPrefix:   "",
-IncludePatterns: []string{".conf", ".hocon"},
-```
-
-If you want to customize these options, you can do so as follows:
-
-```go
-// Get the default options
-opts := hoconenv.DefaultOptions()
-
-// For example, add a prefix
-opts.DefaultPrefix = "APP"
-
-// Load the configuration file with the specified options
-err := hoconenv.LoadWithOptions(opts, "config.conf")
+// After setting this prefix, all variables accessed should use the "PROD" prefix:
+// For example:
+os.Getenv("prod.database.url")
+os.Getenv("prod.database.host")
 ```
 
 ### Configuration File Format
@@ -94,7 +71,7 @@ Hoconenv supports the HOCON format with the following features:
 - Comments: Use # or // for single-line comments.
 - Nested Objects: Objects can be nested inside curly braces {}.
 - Key-Value Pairs: Keys and values are defined using the = sign.
-- Environment Variables: Configuration keys are converted to environment variables (uppercased and . replaced with _).
+- Environment Variables: Configuration keys are converted to environment variables (**lowercase and separated by `.`**).
 
 #### Example `application.conf`
 
@@ -114,9 +91,9 @@ include "additional_config.conf"
 
 The above example will be parsed and converted into the following environment variables:
 
-- **APP_NAME=MyApp**
-- **APP_DATABASE_HOST=localhost**
-- **APP_DATABASE_PORT=5432**
+- **app.name = MyApp**
+- **app.database.host = localhost**
+- **app.database.port = 5432**
 
 If the `include` directive is used, it will recursively load the included file (`additional_config.conf` in this case).
 

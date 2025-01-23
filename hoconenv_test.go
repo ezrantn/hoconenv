@@ -62,13 +62,11 @@ database {
 }
 `
 	createTempConfig(t, "basic.conf", content)
-
-	cfg := NewConfig()
-	err := cfg.Load(DefaultOptions(), "basic.conf")
+	err := Load("basic.conf")
 
 	assertNoError(t, err)
-	assertEnvVar(t, "DATABASE_URL", "postgresql://localhost:5432/db")
-	assertEnvVar(t, "DATABASE_USER", "admin")
+	assertEnvVar(t, "database.url", "postgresql://localhost:5432/db")
+	assertEnvVar(t, "database.user", "admin")
 }
 
 func TestIncludeFile(t *testing.T) {
@@ -85,12 +83,11 @@ app.version = "1.0"
 	createTempConfig(t, "main.conf", mainContent)
 	createTempConfig(t, "sub.conf", subContent)
 
-	cfg := NewConfig()
-	err := cfg.Load(DefaultOptions(), "main.conf")
+	err := Load("main.conf")
 
 	assertNoError(t, err)
-	assertEnvVar(t, "APP_NAME", "main")
-	assertEnvVar(t, "APP_VERSION", "1.0")
+	assertEnvVar(t, "app.name", "main")
+	assertEnvVar(t, "app.version", "1.0")
 }
 
 func TestIncludeURL(t *testing.T) {
@@ -110,12 +107,11 @@ local.config = "local"
 
 	createTempConfig(t, "url.conf", content)
 
-	cfg := NewConfig()
-	err := cfg.Load(DefaultOptions(), "url.conf")
+	err := Load("url.conf")
 
 	assertNoError(t, err)
-	assertEnvVar(t, "REMOTE_CONFIG", "from-url")
-	assertEnvVar(t, "LOCAL_CONFIG", "local")
+	assertEnvVar(t, "remote.config", "from-url")
+	assertEnvVar(t, "local.config", "local")
 }
 
 func TestIncludeDirectory(t *testing.T) {
@@ -132,12 +128,11 @@ include directory("configs")
 
 	createTempConfig(t, "dir.conf", content)
 
-	cfg := NewConfig()
-	err := cfg.Load(DefaultOptions(), "dir.conf")
+	err := Load("dir.conf")
 
 	assertNoError(t, err)
-	assertEnvVar(t, "A", "1")
-	assertEnvVar(t, "B", "2")
+	assertEnvVar(t, "a", "1")
+	assertEnvVar(t, "b", "2")
 }
 
 func TestGlobInclude(t *testing.T) {
@@ -152,12 +147,11 @@ include "conf*.conf"
 `
 	createTempConfig(t, "glob.conf", content)
 
-	cfg := NewConfig()
-	err := cfg.Load(DefaultOptions(), "glob.conf")
+	err := Load("glob.conf")
 
 	assertNoError(t, err)
-	assertEnvVar(t, "A", "1")
-	assertEnvVar(t, "B", "2")
+	assertEnvVar(t, "a", "1")
+	assertEnvVar(t, "b", "2")
 }
 
 func TestOptionalInclude(t *testing.T) {
@@ -171,30 +165,10 @@ test = "value"
 
 	createTempConfig(t, "optional.conf", content)
 
-	cfg := NewConfig()
-	err := cfg.Load(DefaultOptions(), "optional.conf")
+	err := Load("optional.conf")
 
 	assertNoError(t, err)
-	assertEnvVar(t, "TEST", "value")
-}
-
-func TestPrefixOption(t *testing.T) {
-	cleanup := setupTestEnv(t)
-	defer cleanup()
-
-	content := `
-test = "value"	
-`
-	createTempConfig(t, "prefix.conf", content)
-
-	opts := DefaultOptions()
-	opts.DefaultPrefix = "PRE"
-
-	cfg := NewConfig()
-	err := cfg.Load(opts, "prefix.conf")
-
-	assertNoError(t, err)
-	assertEnvVar(t, "PRE_TEST", "value")
+	assertEnvVar(t, "test", "value")
 }
 
 func TestPrefixGlobal(t *testing.T) {
@@ -213,49 +187,5 @@ host = "https://idontknow.com"
 	err := Load("global_prefix.conf")
 
 	assertNoError(t, err)
-	assertEnvVar(t, "PROD_HOST", "https://idontknow.com")
-}
-
-func TestLoadWithOptions(t *testing.T) {
-	cleanup := setupTestEnv(t)
-	defer cleanup()
-
-	local := `
-host = "localhost"	
-`
-
-	staging := `
-host = "https://stg/idontknow.com"	
-`
-
-	prod := `
-host = "https://prod/idontknow.com"	
-`
-
-	createTempConfig(t, "local.conf", local)
-	createTempConfig(t, "staging.conf", staging)
-	createTempConfig(t, "prod.conf", prod)
-
-	localOpts := DefaultOptions()
-	localOpts.DefaultPrefix = "LOCAL"
-
-	stgOpts := DefaultOptions()
-	stgOpts.DefaultPrefix = "STG"
-
-	prodOpts := DefaultOptions()
-	prodOpts.DefaultPrefix = "PROD"
-
-	cfg := NewConfig()
-
-	err := cfg.LoadWithOptions(localOpts, "local.conf")
-	assertNoError(t, err)
-	assertEnvVar(t, "LOCAL_HOST", "localhost")
-
-	err = cfg.LoadWithOptions(stgOpts, "staging.conf")
-	assertNoError(t, err)
-	assertEnvVar(t, "STG_HOST", "https://stg/idontknow.com")
-
-	err = cfg.LoadWithOptions(prodOpts, "prod.conf")
-	assertNoError(t, err)
-	assertEnvVar(t, "PROD_HOST", "https://prod/idontknow.com")
+	assertEnvVar(t, "prod.host", "https://idontknow.com")
 }
