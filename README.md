@@ -75,7 +75,7 @@ Hoconenv supports the HOCON format with the following features:
 
 #### Example `application.conf`
 
-```conf
+```json
 # This is a comment
 app {
     name = MyApp
