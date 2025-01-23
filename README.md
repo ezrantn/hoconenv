@@ -36,7 +36,7 @@ err := hoconenv.Load("config.conf")
 os.Getenv("DATABASE_URL")
 ```
 
-If you're even lazier than this, you can simply import Hoconenv using a blank identifier, like so:
+If you're even lazier than that, you can simply import Hoconenv using a blank identifier, like so:
 
 ```go
 import _ "github.com/ezrantn/hoconenv/autoload"
