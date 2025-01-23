@@ -216,7 +216,7 @@ host = "https://idontknow.com"
 	assertEnvVar(t, "PROD_HOST", "https://idontknow.com")
 }
 
-func TestPrefixLotOptions(t *testing.T) {
+func TestLoadWithOptions(t *testing.T) {
 	cleanup := setupTestEnv(t)
 	defer cleanup()
 
@@ -247,15 +247,15 @@ host = "https://prod/idontknow.com"
 
 	cfg := NewConfig()
 
-	err := cfg.Load(localOpts, "local.conf")
+	err := cfg.LoadWithOptions(localOpts, "local.conf")
 	assertNoError(t, err)
 	assertEnvVar(t, "LOCAL_HOST", "localhost")
 
-	err = cfg.Load(stgOpts, "staging.conf")
+	err = cfg.LoadWithOptions(stgOpts, "staging.conf")
 	assertNoError(t, err)
 	assertEnvVar(t, "STG_HOST", "https://stg/idontknow.com")
 
-	err = cfg.Load(prodOpts, "prod.conf")
+	err = cfg.LoadWithOptions(prodOpts, "prod.conf")
 	assertNoError(t, err)
 	assertEnvVar(t, "PROD_HOST", "https://prod/idontknow.com")
 }
