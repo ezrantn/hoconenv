@@ -58,7 +58,7 @@ To set a global prefix, use:
 // Set a global prefix
 hoconenv.SetPrefix("prod")
 
-// After setting this prefix, all variables accessed should use the "PROD" prefix:
+// After setting this prefix, all variables accessed should use the "prod" prefix:
 // For example:
 os.Getenv("prod.database.url")
 os.Getenv("prod.database.host")
