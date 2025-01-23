@@ -10,9 +10,9 @@ Hoconenv is a Go library for loading [HOCON (Human-Optimized Config Object Notat
 
 - Parse HOCON configuration files.
 - Support for environment variables.
-- Handles comments (both # and //).
+- Handles comments (both `#` and `//`).
 - Supports nested objects.
-- Supports file inclusion (include directive).
+- Supports file inclusion (`include` directive).
 - Automatically converts keys to environment variable format.
 
 ## Installation
@@ -68,10 +68,10 @@ os.Getenv("prod.database.host")
 
 Hoconenv supports the HOCON format with the following features:
 
-- Comments: Use # or // for single-line comments.
-- Nested Objects: Objects can be nested inside curly braces {}.
-- Key-Value Pairs: Keys and values are defined using the = sign.
-- Environment Variables: Configuration keys are converted to environment variables (**lowercase and separated by `.`**).
+- Comments: Use `#` or `//` for single-line comments.
+- Nested Objects: Objects can be nested inside curly braces `{}`.
+- Key-Value Pairs: Keys and values are defined using the `=` sign.
+- Environment Variables: Configuration keys are converted to environment variables (lowercase and separated by `.`).
 
 #### Example `application.conf`
 
@@ -91,9 +91,9 @@ include "additional_config.conf"
 
 The above example will be parsed and converted into the following environment variables:
 
-- **app.name = MyApp**
-- **app.database.host = localhost**
-- **app.database.port = 5432**
+- `app.name = MyApp`
+- `app.database.host = localhost`
+- `app.database.port = 5432`
 
 If the `include` directive is used, it will recursively load the included file (`additional_config.conf` in this case).
 
