@@ -1,12 +1,10 @@
 package hoconenv
 
 import (
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -245,57 +243,5 @@ database {
 	value = GetDefaultValue("database.port", "5432")
 	if value != "5432" {
 		t.Errorf("Expected '5432', got '%s'", value)
-	}
-}
-
-func TestDebug(t *testing.T) {
-	cleanup := setupTestEnv(t)
-	defer cleanup()
-
-	content := `
-app {
-	name = "Microservice Product"
-	database {
-		url = "postgresql://localhost:5432/db"
-		host = "localhost"
-		port = 5432
-	}
-}	
-`
-
-	createTempConfig(t, "debug", content)
-	SetPrefix("test")
-
-	err := Load("debug")
-	assertNoError(t, err)
-
-	// Capture stdout
-	oldStdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	Debug()
-
-	// Restore stdout
-	w.Close()
-	os.Stdout = oldStdout
-
-	out, _ := io.ReadAll(r)
-	output := string(out)
-
-	expectedParts := []string{
-		"=== Hoconenv Debug Information ===",
-		"Total Registered Variables: 4",
-		"test.app.name: Microservice Product",
-		"test.app.database.url: postgresql://localhost:5432/db",
-		"test.app.database.host: localhost",
-		"test.app.database.port: 5432",
-		"=== End of Debug Information ===",
-	}
-
-	for _, part := range expectedParts {
-		if !strings.Contains(output, part) {
-			t.Errorf("Expected output to contain '%s'", part)
-		}
 	}
 }

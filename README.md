@@ -127,47 +127,6 @@ port := hoconenv.GetDefaultValue("database.port", "5432")
 - If a key is not found, the provided default value is used
 - The method supports hierarchical configuration keys with dot notation
 
-### Need for Debugging?
-
-When working with Hoconenv configurations, you can print out all registered environment variables.
-
-**Configuration Example**
-
-```.conf
-app {
-    name = "Microservice Product"
-    database {
-        url = "postgresql://localhost:5432/db"
-        host = "localhost"
-        port = 5432
-    }
-}
-```
-
-**Usage**
-
-```go
-hoconenv.Debug()
-```
-
-**Output**
-
-```bash
-=== Hoconenv Debug Information ===
-Total Registered Variables: 4
-test.app.name: Microservice Product
-test.app.database.url: postgresql://localhost:5432/db
-test.app.database.host: localhost
-test.app.database.port: 5432
-=== End of Debug Information ===
-```
-
-The `Debug()` method helps you:
-
-- View all loaded configuration variables
-- Verify prefix application
-- Quickly inspect configuration state
-
 ### File Inclusion
 
 Hoconenv supports including other configuration files within the main configuration using the `include` directive.
