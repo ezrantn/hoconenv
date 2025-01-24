@@ -27,8 +27,6 @@ go get github.com/ezrantn/hoconenv
 
 ### Important Rules
 
-### Configuration File Format
-
 Hoconenv supports the HOCON format with the following features:
 
 - Comments: Use `#` or `//` for single-line comments.
