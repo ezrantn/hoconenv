@@ -127,7 +127,7 @@ port := hoconenv.GetDefaultValue("database.port", "5432")
 - If a key is not found, the provided default value is used
 - The method supports hierarchical configuration keys with dot notation
 
-### Need for Debug?
+### Need for Debugging?
 
 When working with Hoconenv configurations, you can print out all registered environment variables.
 
