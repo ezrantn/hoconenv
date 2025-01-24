@@ -64,6 +64,36 @@ os.Getenv("prod.database.url")
 os.Getenv("prod.database.host")
 ```
 
+### Default Value
+
+Hoconenv provides a flexible way to retrieve configuration values with fallback default values.
+
+**Configuration Example**
+
+```.conf
+database {
+    url = "postgresql://localhost:5432/db"
+}
+```
+
+**Code Example**
+
+```go
+// Existing valid configuration value
+dbURL := hoconenv.GetDefaultValue("database.url", "mysql://localhost:3306/db")
+// Result: "postgresql://localhost:5432/db"
+
+// Non-existing key with default
+port := hoconenv.GetDefaultValue("database.port", "5432")
+// Result: "5432"
+```
+
+**Behavior**
+
+- If a configuration key exists, its value is returned
+- If a key is not found, the provided default value is used
+- The method supports hierarchical configuration keys with dot notation
+
 ### Configuration File Format
 
 Hoconenv supports the HOCON format with the following features:
@@ -75,7 +105,7 @@ Hoconenv supports the HOCON format with the following features:
 
 #### Example `application.conf`
 
-```apache.conf
+```.conf
 # This is a comment
 app {
     name = MyApp

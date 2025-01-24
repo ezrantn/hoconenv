@@ -189,3 +189,59 @@ host = "https://idontknow.com"
 	assertNoError(t, err)
 	assertEnvVar(t, "prod.host", "https://idontknow.com")
 }
+
+func TestDefaultValueWithPrefix(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	content := `
+host = "localhost"
+`
+
+	createTempConfig(t, "default_value_prefix", content)
+
+	SetPrefix("test")
+
+	err := Load("default_value_prefix")
+	assertNoError(t, err)
+
+	// Test existing key
+	value := GetDefaultValue("test.host", "https://idontknow.com")
+	if value != "localhost" {
+		t.Errorf("Expected 'localhost', got '%s'", value)
+	}
+
+	// Test non-existing key
+	value = GetDefaultValue("test.port", "5432")
+	if value != "5432" {
+		t.Errorf("Expected '5432', got '%s'", value)
+	}
+}
+
+func TestDefaultValue(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	content := `
+database {
+	url = "postgresql://localhost:5432/db"
+}
+`
+
+	createTempConfig(t, "default_value", content)
+
+	err := Load("default_value")
+	assertNoError(t, err)
+
+	// Test existing key
+	value := GetDefaultValue("database.url", "mysql://localhost:3306/db")
+	if value != "postgresql://localhost:5432/db" {
+		t.Errorf("Expected 'postgresql://localhost:5432/db', got '%s'", value)
+	}
+
+	// Test non-existing key
+	value = GetDefaultValue("database.port", "5432")
+	if value != "5432" {
+		t.Errorf("Expected '5432', got '%s'", value)
+	}
+}
