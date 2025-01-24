@@ -25,6 +25,41 @@ go get github.com/ezrantn/hoconenv
 
 ## Usage
 
+### Important Rules
+
+### Configuration File Format
+
+Hoconenv supports the HOCON format with the following features:
+
+- Comments: Use `#` or `//` for single-line comments.
+- Nested Objects: Objects can be nested inside curly braces `{}`.
+- Key-Value Pairs: Keys and values are defined using the `=` sign.
+- Environment Variables: Configuration keys are converted to environment variables (lowercase and separated by `.`).
+
+#### Example `application.conf`
+
+```.conf
+# This is a comment
+app {
+    name = MyApp
+    database {
+        host = localhost # Inline comment
+        port = 5432
+    }
+}
+
+# Another comment
+include "additional_config.conf"
+```
+
+The above example will be parsed and converted into the following environment variables:
+
+- `app.name = MyApp`
+- `app.database.host = localhost`
+- `app.database.port = 5432`
+
+If the `include` directive is used, it will recursively load the included file (`additional_config.conf` in this case).
+
 ### Quick Start
 
 ```go
@@ -94,38 +129,46 @@ port := hoconenv.GetDefaultValue("database.port", "5432")
 - If a key is not found, the provided default value is used
 - The method supports hierarchical configuration keys with dot notation
 
-### Configuration File Format
+### Need for Debug?
 
-Hoconenv supports the HOCON format with the following features:
+When working with Hoconenv configurations, you can print out all registered environment variables.
 
-- Comments: Use `#` or `//` for single-line comments.
-- Nested Objects: Objects can be nested inside curly braces `{}`.
-- Key-Value Pairs: Keys and values are defined using the `=` sign.
-- Environment Variables: Configuration keys are converted to environment variables (lowercase and separated by `.`).
-
-#### Example `application.conf`
+**Configuration Example**
 
 ```.conf
-# This is a comment
 app {
-    name = MyApp
+    name = "Microservice Product"
     database {
-        host = localhost # Inline comment
+        url = "postgresql://localhost:5432/db"
+        host = "localhost"
         port = 5432
     }
 }
-
-# Another comment
-include "additional_config.conf"
 ```
 
-The above example will be parsed and converted into the following environment variables:
+**Usage**
 
-- `app.name = MyApp`
-- `app.database.host = localhost`
-- `app.database.port = 5432`
+```go
+hoconenv.Debug()
+```
 
-If the `include` directive is used, it will recursively load the included file (`additional_config.conf` in this case).
+**Output**
+
+```bash
+=== Hoconenv Debug Information ===
+Total Registered Variables: 4
+test.app.name: Microservice Product
+test.app.database.url: postgresql://localhost:5432/db
+test.app.database.host: localhost
+test.app.database.port: 5432
+=== End of Debug Information ===
+```
+
+The `Debug()` method helps you:
+
+- View all loaded configuration variables
+- Verify prefix application
+- Quickly inspect configuration state
 
 ### File Inclusion
 

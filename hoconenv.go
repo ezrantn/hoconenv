@@ -67,6 +67,21 @@ func GetDefaultValue(key, defaultValue string) string {
 	return defaultValue
 }
 
+// Debug prints all currently registered environment variables
+func Debug() {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	fmt.Println("=== Hoconenv Debug Information ===")
+	fmt.Println("Total Registered Variables:", len(variables))
+
+	for key, value := range variables {
+		fmt.Printf("%s: %s\n", key, value)
+	}
+
+	fmt.Println("=== End of Debug Information ===")
+}
+
 // loadFile handles the actual file loading logic
 func loadFile(filePath string) error {
 	mutex.Lock()
