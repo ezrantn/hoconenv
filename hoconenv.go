@@ -13,16 +13,17 @@ var (
 	variables   = make(map[string]string)
 	loadedFiles = make(map[string]bool)
 	mutex       sync.RWMutex
-	prefix      string
+	prefix      = ""
 )
 
+// SetPrefix configures the global prefix for environment variables
 func SetPrefix(p string) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	prefix = strings.ToLower(strings.TrimSpace(p)) + "."
 }
 
-// Load loads configuration from specified files or default application.* files.
+// Load loads configuration from specified files or default application.* files
 func Load(files ...string) error {
 	// If no fileName is passed, search for default files
 	if len(files) == 0 {
@@ -49,7 +50,6 @@ func Load(files ...string) error {
 }
 
 // GetDefaultValue retrieves the environment variable by key
-// If the variable is not set or empty, it returns the provided default value.
 func GetDefaultValue(key, defaultValue string) string {
 	mutex.RLock()
 	defer mutex.RUnlock()

@@ -51,6 +51,25 @@ func assertEnvVar(t *testing.T, key, expected string) {
 	}
 }
 
+func TestDefaultFile(t *testing.T) {
+	cleanup := setupTestEnv(t)
+	defer cleanup()
+
+	content := `
+database {
+	url = "postgresql://localhost:5432/db"
+	user = "admin"
+}	
+`
+
+	createTempConfig(t, "application.conf", content)
+	err := Load()
+
+	assertNoError(t, err)
+	assertEnvVar(t, "database.url", "postgresql://localhost:5432/db")
+	assertEnvVar(t, "database.user", "admin")
+}
+
 func TestBasicLoading(t *testing.T) {
 	cleanup := setupTestEnv(t)
 	defer cleanup()
