@@ -69,44 +69,49 @@ func GetDefaultValue(key, defaultValue string) string {
 
 // loadFile handles the actual file loading logic
 func loadFile(filePath string) error {
-	mutex.Lock()
-	if loadedFiles[filePath] {
-		mutex.Unlock()
-		return nil // Skip already loaded files
-	}
-	loadedFiles[filePath] = true
-	mutex.Unlock()
+    mutex.Lock()
+    if loadedFiles[filePath] {
+        mutex.Unlock()
+        return nil // Skip already loaded files
+    }
+    loadedFiles[filePath] = true
+    mutex.Unlock()
 
-	file, err := os.Open(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to open config file %s: %w", filePath, err)
-	}
-	defer file.Close()
+    file, err := os.Open(filePath)
+    if err != nil {
+        if os.IsNotExist(err) {
+            return fmt.Errorf("file does not exist: %s", filePath)
+        }
 
-	scanner := bufio.NewScanner(file)
-	var keyStack []string
-	lineNum := 0
+        return fmt.Errorf("failed to open config file %s: %w", filePath, err)
+    }
 
-	for scanner.Scan() {
-		lineNum++
-		line := strings.TrimSpace(scanner.Text())
+    defer file.Close()
 
-		// Skip comments and empty lines
-		if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, "//") {
-			continue
-		}
+    scanner := bufio.NewScanner(file)
+    var keyStack []string
+    lineNum := 0
 
-		if err := parseLine(line, &keyStack, filePath, lineNum); err != nil {
-			return err
-		}
-	}
+    for scanner.Scan() {
+        lineNum++
+        line := strings.TrimSpace(scanner.Text())
 
-	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("error reading file %s: %w", filePath, err)
-	}
+        // Skip comments and empty lines
+        if line == "" || strings.HasPrefix(line, "#") || strings.HasPrefix(line, "//") {
+            continue
+        }
 
-	// Apply variables to environment
-	return applyVariables()
+        if err := parseLine(line, &keyStack, filePath, lineNum); err != nil {
+            return err
+        }
+    }
+
+    if err := scanner.Err(); err != nil {
+        return fmt.Errorf("error reading file %s: %w", filePath, err)
+    }
+
+    // Apply variables to environment
+    return applyVariables()
 }
 
 // parseLine handles parsing of individual HOCON lines
@@ -185,17 +190,19 @@ func handleInclude(value string, currentFile string) error {
 	// Remove "include" keyword and trim spaces
 	includeStr := strings.TrimSpace(strings.TrimPrefix(value, "include"))
 
-	// Handle quoted strings
-	includeStr = strings.Trim(includeStr, "\"'")
-
 	// Parse include type and path
 	isRequired := true
-	if strings.HasPrefix(includeStr, "optional(") && strings.HasSuffix(includeStr, ")") {
+
+	if strings.HasPrefix(includeStr, "optional ") {
 		isRequired = false
-		includeStr = strings.TrimPrefix(includeStr, "optional(")
-		includeStr = strings.TrimSuffix(includeStr, ")")
-		includeStr = strings.Trim(includeStr, "\"'")
+		includeStr = strings.TrimSpace(strings.TrimPrefix(includeStr, "optional"))
+	} else if strings.HasPrefix(includeStr, "required ") {
+		isRequired = true
+		includeStr = strings.TrimSpace(strings.TrimPrefix(includeStr, "required"))
 	}
+
+	// Handle quoted strings
+	includeStr = strings.Trim(includeStr, "\"'")
 
 	// Handle different include patterns
 	switch {

@@ -27,13 +27,16 @@ func handleFileInclude(file string, required bool, currentFile string) error {
 		file = filepath.Join(filepath.Dir(currentFile), file)
 	}
 
-	if err := loadFile(file); err != nil {
+	err := loadFile(file)
+	if err != nil {
 		if required {
 			return fmt.Errorf("failed to include required file %s: %w", file, err)
 		}
 		// Log warning for optional includes
 		fmt.Printf("Warning: Optional include file not found: %s\n", file)
+		return nil
 	}
+
 	return nil
 }
 

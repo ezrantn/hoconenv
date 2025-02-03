@@ -93,7 +93,7 @@ func TestIncludeFile(t *testing.T) {
 	defer cleanup()
 
 	mainContent := `
-include "sub.conf"
+include required "sub.conf"
 app.name = "main"
 `
 	subContent := `
@@ -108,6 +108,29 @@ app.version = "1.0"
 	assertEnvVar(t, "app.name", "main")
 	assertEnvVar(t, "app.version", "1.0")
 }
+
+// func TestIncludeFileDoesNotExist(t *testing.T) {
+// 	cleanup := setupTestEnv(t)
+// 	defer cleanup()
+
+// 	mainContent := `
+// include required "missing.conf"
+// app.name = "main"
+// `
+
+// 	createTempConfig(t, "main.conf", mainContent)
+
+// 	err := Load("main.conf")
+
+// 	if err == nil {
+// 		t.Fatal("expected an error for missing required file, but got nil")
+// 	}
+
+// 	expectedErr := "failed to include required file"
+// 	if !strings.Contains(err.Error(), expectedErr) {
+// 		t.Errorf("expected error to contain %q, got %q", expectedErr, err.Error())
+// 	}
+// }
 
 func TestIncludeURL(t *testing.T) {
 	cleanup := setupTestEnv(t)
@@ -178,7 +201,7 @@ func TestOptionalInclude(t *testing.T) {
 	defer cleanup()
 
 	content := `
-include optional("nonexistent.conf")
+include optional ("nonexistent.conf")
 test = "value"	
 `
 
