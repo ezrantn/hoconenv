@@ -1,4 +1,4 @@
-# Hoconenv
+# [@ezrantn/hoconenv](https://github.com/ezrantn/hoconenv)
 
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/ezrantn/hoconenv/go.yml)
 ![GitHub License](https://img.shields.io/github/license/ezrantn/hoconenv)
